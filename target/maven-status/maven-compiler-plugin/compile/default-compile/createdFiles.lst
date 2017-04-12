@@ -1,0 +1,4 @@
+sprakbanken/strix/StrixPlugin.class
+sprakbanken/strix/StrixFetchSubPhase.class
+sprakbanken/strix/SetDelimiterTokenFilter.class
+sprakbanken/strix/SetDelimiterTokenFilterFactory.class

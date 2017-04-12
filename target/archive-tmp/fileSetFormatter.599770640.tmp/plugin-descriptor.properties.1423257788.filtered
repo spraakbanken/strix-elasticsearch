@@ -1,0 +1,7 @@
+name=strix-elasticsearch-plugin
+description=TODO
+version=1.0
+jvm=true
+classname=sprakbanken.strix.StrixPlugin
+java.version=1.8
+elasticsearch.version=2.4.1
