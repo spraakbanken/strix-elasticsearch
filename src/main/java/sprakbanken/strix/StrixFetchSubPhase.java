@@ -8,7 +8,6 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.fetch.subphase.highlight.SearchContextHighlight;
-import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.SearchContext;
 
 import java.io.IOException;
@@ -17,11 +16,6 @@ import java.util.*;
 public class StrixFetchSubPhase implements FetchSubPhase {
 
     public StrixFetchSubPhase() {
-    }
-
-    @Override
-    public void hitsExecute(SearchContext context, InternalSearchHit[] hits) {
-
     }
 
     @Override
