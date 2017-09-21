@@ -43,71 +43,68 @@ public class StrixFetchSubPhase implements FetchSubPhase {
             return;
         }
 
-        SpanQuery spanQuery = getSpanQuery(context);
+        List<SpanQuery> spanQueries = getSpanQueriesFromContext(context);
+        Map<Integer, Set<Integer>> seenStartPositions = new HashMap<>();
 
-        if(spanQuery == null) {
-            return;
-        }
-
-        try {
-            SpanWeight weight = spanQuery.createWeight(context.searcher(), false);
-            Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
-
-            if(spans == null) {
+        List<Text> docHighlights = new ArrayList<>();
+        for(SpanQuery spanQuery : spanQueries) {
+            if (spanQuery == null) {
                 return;
             }
 
-            int docId;
-            while ((docId = spans.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
-                if(docId == hitContext.docId()) {
-                    List<Text> docHighlights = new ArrayList<>();
-                    Set<Integer> seenStartPositions = new HashSet<>();
-                    while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || docHighlights.size() < numberOfFragments)) {
-                        int start = spans.startPosition();
-                        if(seenStartPositions.contains(start)) {
-                            continue;
-                        }
-                        seenStartPositions.add(start);
-                        int end = spans.endPosition();
-                        docHighlights.add(new Text(start + "-" + end));
-                    }
+            try {
+                SpanWeight weight = spanQuery.createWeight(context.searcher(), false);
+                Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
 
-                    Text[] something = docHighlights.toArray(new Text[0]);
-                    Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(docId), new HighlightField("positions", something));
-                    hitContext.hit().highlightFields(highlightFields);
-                    break;
+                if (spans == null) {
+                    return;
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
+                int docId;
+                while ((docId = spans.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+                    if (docId == hitContext.docId()) {
+                        Set<Integer> seenStartPositionsDoc = seenStartPositions.get(docId);
+                        if(seenStartPositionsDoc == null) {
+                            seenStartPositionsDoc = new HashSet<>();
+                            seenStartPositions.put(docId, seenStartPositionsDoc);
+                        }
+                        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || docHighlights.size() < numberOfFragments)) {
+                            int start = spans.startPosition();
+                            if (seenStartPositionsDoc.contains(start)) {
+                                continue;
+                            }
+                            seenStartPositionsDoc.add(start);
+                            int end = spans.endPosition();
+                            docHighlights.add(new Text(start + "-" + end));
+                        }
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        Text[] something = docHighlights.toArray(new Text[0]);
+        Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(hitContext.docId()), new HighlightField("positions", something));
+        hitContext.hit().highlightFields(highlightFields);
     }
 
     // TODO: We can search recursively for a span query instead
-    private SpanQuery getSpanQuery(SearchContext context) {
-        SpanQuery spanQuery = null;
+    private List<SpanQuery> getSpanQueriesFromContext(SearchContext context) {
+        return getSpanQueries(context.query());
+    }
 
-        Query query = context.query();
+    private List<SpanQuery> getSpanQueries(Query query) {
+        List<SpanQuery> spanQueries = new ArrayList<>();
         if(query instanceof SpanQuery) {
-            spanQuery = (SpanQuery) query;
+            spanQueries.add((SpanQuery) query);
         } else if(query instanceof BooleanQuery) {
             BooleanQuery booleanQuery = (BooleanQuery) query;
             for(BooleanClause clause : booleanQuery.clauses()) {
-                if(clause.getQuery() instanceof SpanQuery) {
-                    spanQuery = (SpanQuery) clause.getQuery();
-                    break;
-                } else if(clause.getQuery() instanceof BooleanQuery) {
-                    BooleanQuery nested = (BooleanQuery) clause.getQuery();
-                    for(BooleanClause nestedClause : nested.clauses()) {
-                        if(nestedClause.getQuery() instanceof SpanQuery) {
-                            spanQuery = (SpanQuery) nestedClause.getQuery();
-                            break;
-                        }
-                    }
-                }
+                spanQueries.addAll(getSpanQueries(clause.getQuery()));
             }
         }
-        return spanQuery;
+        return spanQueries;
     }
+
 }
