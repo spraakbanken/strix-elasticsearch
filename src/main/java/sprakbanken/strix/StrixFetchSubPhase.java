@@ -12,6 +12,7 @@ import org.elasticsearch.search.internal.SearchContext;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class StrixFetchSubPhase implements FetchSubPhase {
 
@@ -44,9 +45,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
         }
 
         List<SpanQuery> spanQueries = getSpanQueriesFromContext(context);
-        Map<Integer, Set<Integer>> seenStartPositions = new HashMap<>();
-
-        List<Text> docHighlights = new ArrayList<>();
+        Set<Tuple<Integer, Integer>> allHighlights = new HashSet<>();
         for(SpanQuery spanQuery : spanQueries) {
             if (spanQuery == null) {
                 return;
@@ -63,19 +62,26 @@ public class StrixFetchSubPhase implements FetchSubPhase {
                 int docId;
                 while ((docId = spans.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
                     if (docId == hitContext.docId()) {
-                        Set<Integer> seenStartPositionsDoc = seenStartPositions.get(docId);
-                        if(seenStartPositionsDoc == null) {
-                            seenStartPositionsDoc = new HashSet<>();
-                            seenStartPositions.put(docId, seenStartPositionsDoc);
-                        }
-                        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || docHighlights.size() < numberOfFragments)) {
-                            int start = spans.startPosition();
-                            if (seenStartPositionsDoc.contains(start)) {
-                                continue;
+                        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || allHighlights.size() < numberOfFragments)) {
+                            int startPos = spans.startPosition();
+                            int endPos = spans.endPosition();
+                            boolean addHighlight = true;
+                            List<Tuple<Integer, Integer>> toBeRemoved = new ArrayList<>();
+                            for(Tuple<Integer, Integer> interval : allHighlights) {
+                                int intervalFrom = interval.x;
+                                int intervalTo = interval.y;
+                                if(startPos >= intervalFrom && endPos <= intervalTo) {
+                                    addHighlight = false;
+                                    break;
+                                }
+                                if(intervalFrom >= startPos && intervalTo <= endPos) {
+                                    toBeRemoved.add(interval);
+                                }
                             }
-                            seenStartPositionsDoc.add(start);
-                            int end = spans.endPosition();
-                            docHighlights.add(new Text(start + "-" + end));
+                            if(addHighlight) {
+                                toBeRemoved.forEach(allHighlights::remove);
+                                allHighlights.add(new Tuple<>(startPos, endPos));
+                            }
                         }
                         break;
                     }
@@ -84,24 +90,37 @@ public class StrixFetchSubPhase implements FetchSubPhase {
                 e.printStackTrace();
             }
         }
+
+        List<Tuple<Integer, Integer>> sortedHighlights = new ArrayList<>(allHighlights);
+        Collections.sort(sortedHighlights, (a, b) -> {
+            int compare = Integer.compare(b.y - b.x, a.y - a.x);
+            if (compare != 0) {
+                return compare;
+            } else {
+                return Integer.compare(a.x, b.x);
+            }
+        });
+
+        List<Text> docHighlights = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).collect(Collectors.toList());
         Text[] something = docHighlights.toArray(new Text[0]);
         Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(hitContext.docId()), new HighlightField("positions", something));
         hitContext.hit().highlightFields(highlightFields);
     }
 
-    // TODO: We can search recursively for a span query instead
     private List<SpanQuery> getSpanQueriesFromContext(SearchContext context) {
-        return getSpanQueries(context.query());
+        List<Tuple<Integer, SpanQuery>> spanQueries = getSpanQueries(context.query(), 1);
+        Collections.sort(spanQueries, (a, b) -> Integer.compare(a.x, b.x));
+        return spanQueries.stream().map(spanQuery -> spanQuery.y).collect(Collectors.toList());
     }
 
-    private List<SpanQuery> getSpanQueries(Query query) {
-        List<SpanQuery> spanQueries = new ArrayList<>();
+    private List<Tuple<Integer, SpanQuery>> getSpanQueries(Query query, int level) {
+        List<Tuple<Integer, SpanQuery>> spanQueries = new ArrayList<>();
         if(query instanceof SpanQuery) {
-            spanQueries.add((SpanQuery) query);
+            spanQueries.add(new Tuple<>(level, (SpanQuery) query));
         } else if(query instanceof BooleanQuery) {
             BooleanQuery booleanQuery = (BooleanQuery) query;
             for(BooleanClause clause : booleanQuery.clauses()) {
-                spanQueries.addAll(getSpanQueries(clause.getQuery()));
+                spanQueries.addAll(getSpanQueries(clause.getQuery(), level + 1));
             }
         }
         return spanQueries;
