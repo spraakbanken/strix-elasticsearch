@@ -91,6 +91,10 @@ public class StrixFetchSubPhase implements FetchSubPhase {
             }
         }
 
+        if(allHighlights.size() == 0) {
+            return;
+        }
+
         List<Tuple<Integer, Integer>> sortedHighlights = new ArrayList<>(allHighlights);
         Collections.sort(sortedHighlights, (a, b) -> {
             int compare = Integer.compare(b.y - b.x, a.y - a.x);
