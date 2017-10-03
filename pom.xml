@@ -26,13 +26,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-      <version>${elasticsearch.version}</version>
-      <scope>test</scope>
-      <type>test-jar</type>
-    </dependency>
-    <dependency>
       <groupId>org.elasticsearch.test</groupId>
       <artifactId>framework</artifactId>
       <version>${elasticsearch.version}</version>

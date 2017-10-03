@@ -17,11 +17,13 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.*;
 
+@Ignore
 @RunWith(com.carrotsearch.randomizedtesting.RandomizedRunner.class)
 @ClusterScope(scope = Scope.SUITE, supportsDedicatedMasters = false, numDataNodes = 1)
 public class HighlightTest extends ESIntegTestCase {
