@@ -48,7 +48,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
         Set<Tuple<Integer, Integer>> allHighlights = new HashSet<>();
         for(SpanQuery spanQuery : spanQueries) {
             if (spanQuery == null) {
-                return;
+                continue;
             }
 
             try {
@@ -56,7 +56,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
                 Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
 
                 if (spans == null) {
-                    return;
+                    continue;
                 }
 
                 int docId;
