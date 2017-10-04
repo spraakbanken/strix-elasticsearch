@@ -1,6 +1,9 @@
 package sprakbanken.strix;
 
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -46,12 +49,20 @@ public class StrixFetchSubPhase implements FetchSubPhase {
 
         List<SpanQuery> spanQueries = getSpanQueriesFromContext(context);
         Set<Tuple<Integer, Integer>> allHighlights = new HashSet<>();
+        // TODO: advance each span query in turn, to allow for getting highlights in document order
+        //       instead of getting all spans for a query before moving to the next
         for(SpanQuery spanQuery : spanQueries) {
+            if(numberOfFragments != -1 && allHighlights.size() >= numberOfFragments) {
+                break;
+            }
+
             if (spanQuery == null) {
+                // TODO: will this ever happen?
                 continue;
             }
 
             try {
+                // TODO is it faster to use new IndexSearcher(hitContext.reader()) instead of context.searcher() for createWeight?
                 SpanWeight weight = spanQuery.createWeight(context.searcher(), false);
                 Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
 
@@ -59,31 +70,30 @@ public class StrixFetchSubPhase implements FetchSubPhase {
                     continue;
                 }
 
-                int docId;
-                while ((docId = spans.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
-                    if (docId == hitContext.docId()) {
-                        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || allHighlights.size() < numberOfFragments)) {
-                            int startPos = spans.startPosition();
-                            int endPos = spans.endPosition();
-                            boolean addHighlight = true;
-                            List<Tuple<Integer, Integer>> toBeRemoved = new ArrayList<>();
-                            for(Tuple<Integer, Integer> interval : allHighlights) {
-                                int intervalFrom = interval.x;
-                                int intervalTo = interval.y;
-                                if(startPos >= intervalFrom && endPos <= intervalTo) {
-                                    addHighlight = false;
-                                    break;
-                                }
-                                if(intervalFrom >= startPos && intervalTo <= endPos) {
-                                    toBeRemoved.add(interval);
-                                }
-                            }
-                            if(addHighlight) {
-                                toBeRemoved.forEach(allHighlights::remove);
-                                allHighlights.add(new Tuple<>(startPos, endPos));
-                            }
+                int docId = spans.advance(hitContext.docId());
+                if(docId == DocIdSetIterator.NO_MORE_DOCS || docId != hitContext.docId()) {
+                    continue;
+                }
+
+                while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS && (numberOfFragments == -1 || allHighlights.size() < numberOfFragments)) {
+                    int startPos = spans.startPosition();
+                    int endPos = spans.endPosition();
+                    boolean addHighlight = true;
+                    List<Tuple<Integer, Integer>> toBeRemoved = new ArrayList<>();
+                    for(Tuple<Integer, Integer> interval : allHighlights) {
+                        int intervalFrom = interval.x;
+                        int intervalTo = interval.y;
+                        if(startPos >= intervalFrom && endPos <= intervalTo) {
+                            addHighlight = false;
+                            break;
                         }
-                        break;
+                        if(intervalFrom >= startPos && intervalTo <= endPos) {
+                            toBeRemoved.add(interval);
+                        }
+                    }
+                    if(addHighlight) {
+                        toBeRemoved.forEach(allHighlights::remove);
+                        allHighlights.add(new Tuple<>(startPos, endPos));
                     }
                 }
             } catch (IOException e) {
