@@ -31,7 +31,7 @@ unzip -qq $elasticzip
 cp analyzers/stems.txt $elasticdir/config
 
 # move and unpack the strix plugin
-unzip -qq elasticsearch-plugin/strix-elasticsearch-plugin-$version.zip -d $elasticdir/plugins/
+unzip -qq plugin/strix-elasticsearch-plugin-$version.zip -d $elasticdir/plugins/
 
 # update the config
 echo "http.max_content_length: 1000mb" >> $elasticdir/config/elasticsearch.yml
