@@ -5,9 +5,7 @@ import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.SpanTermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -40,7 +38,7 @@ public class HighlightTest extends ESIntegTestCase {
         XContentBuilder mapping = getMapping();
         client().admin().indices().prepareCreate("test")
                 .setSettings(defaultSettings)
-                .addMapping("type", mapping)
+                .addMapping("test", mapping)
                 .execute().actionGet();
 
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().execute().actionGet();
@@ -116,9 +114,37 @@ public class HighlightTest extends ESIntegTestCase {
         assertEquals("501-503", fragments[1].string());
     }
 
+    public void testSpanQueryAnyTokenZeroMatches() {
+        smallIndex();
+        SpanTermQueryBuilder foo = QueryBuilders.spanTermQuery("text", "foo");
+        SpanQueryAnyTokenBuilder bar = new SpanQueryAnyTokenBuilder("text", 2);
+        SearchHit[] hits = getSearchHits(QueryBuilders.spanNearQuery(foo, 0).addClause(bar));
+        assertEquals(0, hits.length);
+    }
+
+    public void testSpanQueryAnyToken() {
+        client().prepareIndex("test", "test", "1").setSource("text", "foo bar lol").get();
+        client().prepareIndex("test", "test", "2").setSource("text", "foo lol bar").get();
+        refresh();
+
+        SpanQueryBuilder foo = QueryBuilders.spanTermQuery("text", "foo");
+        SpanQueryBuilder bar = new SpanQueryAnyTokenBuilder("text", 1);
+        SpanQueryBuilder lol = QueryBuilders.spanTermQuery("text", "lol");
+        SpanNearQueryBuilder queryBuilder = QueryBuilders.spanNearQuery(foo, 0).addClause(bar).addClause(lol);
+        String cool = queryBuilder.toString();
+        SearchHit[] hits = getSearchHits(queryBuilder);
+        assertEquals(1, hits.length);
+
+        Map<String, HighlightField> highlightFields = hits[0].getHighlightFields();
+        HighlightField positions = highlightFields.get("positions");
+        assertNotNull(positions);
+        Text[] fragments = positions.getFragments();
+        assertEquals(1, fragments.length);
+        assertEquals("0-2", fragments[0].string());
+    }
 
     private XContentBuilder getMapping() throws IOException {
-        XContentBuilder properties = XContentFactory.jsonBuilder().startObject().startObject("type").startObject("properties");
+        XContentBuilder properties = XContentFactory.jsonBuilder().startObject().startObject("test").startObject("properties");
         properties.startObject("text").field("type", "text").field("analyzer", "text_analyzer").endObject();
         return properties.endObject().endObject().endObject();
     }
