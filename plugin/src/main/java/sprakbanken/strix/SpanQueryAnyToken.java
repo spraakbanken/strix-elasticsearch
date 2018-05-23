@@ -31,15 +31,14 @@ public class SpanQueryAnyToken extends SpanQuery {
     }
 
     @Override
-    public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-        return new SpanQueryAnyToken.SpanGapWeight(searcher, boost);
+    public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        return new SpanQueryAnyToken.SpanGapWeight(searcher);
     }
-
 
     private class SpanGapWeight extends SpanWeight {
 
-        SpanGapWeight(IndexSearcher searcher, float boost) throws IOException {
-            super(SpanQueryAnyToken.this, searcher, null, boost);
+        SpanGapWeight(IndexSearcher searcher) throws IOException {
+            super(SpanQueryAnyToken.this, searcher, null);
         }
 
         @Override
@@ -55,11 +54,6 @@ public class SpanQueryAnyToken extends SpanQuery {
         @Override
         public void extractTerms(Set<Term> terms) {
 
-        }
-
-        @Override
-        public boolean isCacheable(LeafReaderContext ctx) {
-            return true;
         }
 
     }

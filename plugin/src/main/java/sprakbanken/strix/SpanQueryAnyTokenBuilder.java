@@ -8,10 +8,12 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.index.query.QueryShardContext;
 import org.elasticsearch.index.query.SpanQueryBuilder;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class SpanQueryAnyTokenBuilder extends AbstractQueryBuilder<SpanQueryAnyTokenBuilder> implements SpanQueryBuilder {
     public static final String NAME = "span_any";
@@ -43,7 +45,9 @@ public class SpanQueryAnyTokenBuilder extends AbstractQueryBuilder<SpanQueryAnyT
         builder.startObject(NAME).field("width", this.width).field("field", this.field).endObject();
     }
 
-    public static SpanQueryAnyTokenBuilder fromXContent(XContentParser parser) throws IOException {
+    public static Optional<SpanQueryAnyTokenBuilder> fromXContent(QueryParseContext parseContext) throws IOException {
+        XContentParser parser = parseContext.parser();
+
         int width = 0;
         String field = "";
 
@@ -64,7 +68,7 @@ public class SpanQueryAnyTokenBuilder extends AbstractQueryBuilder<SpanQueryAnyT
                 throw new ParsingException(parser.getTokenLocation(), "[span_any] query does not support [" + currentFieldName + "]");
             }
         }
-        return new SpanQueryAnyTokenBuilder(field, width);
+        return Optional.of(new SpanQueryAnyTokenBuilder(field, width));
     }
 
     @Override
