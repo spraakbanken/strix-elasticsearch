@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -x
+set -x
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 VERSION"
@@ -9,15 +9,15 @@ fi
 
 version=$1
 elasticzipurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$version.zip"
-elasticshaurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$version.zip.sha1"
+elasticshaurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$version.zip.sha512"
 elasticzip="elasticsearch-$version.zip"
-elasticsha="elasticsearch-$version.zip.sha1"
+elasticsha="elasticsearch-$version.zip.sha512"
 elasticdir="elasticsearch-$version"
 
 wget $elasticzipurl --output-document $elasticzip
 wget $elasticshaurl --output-document $elasticsha
 
-result=`for f in elasticsearch-$version.zip.sha1; do echo "$(cat $f) ${f/.sha1/}"; done | sha1sum -c`
+result=`for f in elasticsearch-$version.zip.sha512; do echo "$(cat $f)"; done | sha512sum -c`
 if [[ $result != *OK* ]]; then
     echo "wrong sha1 sum for zip"
     exit 1
