@@ -42,9 +42,7 @@ zip -qq -r $elasticzip $elasticdir
 rm -r $elasticdir
 
 
-
-
-scp $elasticzip demo:/export/htdocs/mariao/strix/elasticsearch/strix-elasticsearch_$strix_es_version.zip
-
-rm $elasticzip
+rm -r dist
+mkdir dist
+mv $elasticzip dist/strix-elasticsearch_$strix_es_version.zip
 
