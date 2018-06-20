@@ -7,7 +7,7 @@ mvn install
 cd ..
 
 es_version="6.2.4"
-strix_es_version="1.0"
+strix_es_version="1.1.dev"
 
 elasticzipurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$es_version.zip"
 elasticshaurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$es_version.zip.sha512"
