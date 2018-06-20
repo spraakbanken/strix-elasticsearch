@@ -63,7 +63,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
 
             try {
                 // TODO is it faster to use new IndexSearcher(hitContext.reader()) instead of context.searcher() for createWeight?
-                SpanWeight weight = spanQuery.createWeight(context.searcher(), false);
+                SpanWeight weight = spanQuery.createWeight(context.searcher(), false, 0);
                 Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
 
                 if (spans == null) {
@@ -106,7 +106,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
         }
 
         List<Tuple<Integer, Integer>> sortedHighlights = new ArrayList<>(allHighlights);
-        Collections.sort(sortedHighlights, (a, b) -> {
+        sortedHighlights.sort((a, b) -> {
             int compare = Integer.compare(b.y - b.x, a.y - a.x);
             if (compare != 0) {
                 return compare;
@@ -123,7 +123,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
 
     private List<SpanQuery> getSpanQueriesFromContext(SearchContext context) {
         List<Tuple<Integer, SpanQuery>> spanQueries = getSpanQueries(context.query(), 1);
-        Collections.sort(spanQueries, (a, b) -> Integer.compare(a.x, b.x));
+        spanQueries.sort(Comparator.comparingInt(a -> a.x));
         return spanQueries.stream().map(spanQuery -> spanQuery.y).collect(Collectors.toList());
     }
 

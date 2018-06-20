@@ -1,23 +1,24 @@
 #!/bin/bash
 
-#set -x
+set -x
 
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 VERSION"
-    exit 1
-fi
+cd plugin
+mvn install
+cd ..
 
-version=$1
-elasticzipurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$version.zip"
-elasticshaurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$version.zip.sha1"
-elasticzip="elasticsearch-$version.zip"
-elasticsha="elasticsearch-$version.zip.sha1"
-elasticdir="elasticsearch-$version"
+es_version="6.2.4"
+strix_es_version="1.0"
+
+elasticzipurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$es_version.zip"
+elasticshaurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$es_version.zip.sha512"
+elasticzip="elasticsearch-$es_version.zip"
+elasticsha="elasticsearch-$es_version.zip.sha512"
+elasticdir="elasticsearch-$es_version"
 
 wget $elasticzipurl --output-document $elasticzip
 wget $elasticshaurl --output-document $elasticsha
 
-result=`for f in elasticsearch-$version.zip.sha1; do echo "$(cat $f) ${f/.sha1/}"; done | sha1sum -c`
+result=`for f in elasticsearch-$es_version.zip.sha512; do echo "$(cat $f)"; done | sha512sum -c`
 if [[ $result != *OK* ]]; then
     echo "wrong sha1 sum for zip"
     exit 1
@@ -31,7 +32,7 @@ unzip -qq $elasticzip
 cp analyzers/stems.txt $elasticdir/config
 
 # move and unpack the strix plugin
-unzip -qq plugin/strix-elasticsearch-plugin-$version.zip -d $elasticdir/plugins/
+unzip -qq plugin/target/releases/*.zip -d $elasticdir/plugins/
 
 # update the config
 echo "http.max_content_length: 1000mb" >> $elasticdir/config/elasticsearch.yml
@@ -39,4 +40,9 @@ echo "http.max_content_length: 1000mb" >> $elasticdir/config/elasticsearch.yml
 echo "indices.memory.index_buffer_size: 13%" >> $elasticdir/config/elasticsearch.yml
 zip -qq -r $elasticzip $elasticdir
 rm -r $elasticdir
+
+
+rm -r dist
+mkdir dist
+mv $elasticzip dist/strix-elasticsearch_$strix_es_version.zip
 

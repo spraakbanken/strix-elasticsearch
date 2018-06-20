@@ -1,6 +1,7 @@
 package sprakbanken.strix;
 
 import org.elasticsearch.index.analysis.TokenFilterFactory;
+import org.elasticsearch.index.query.QueryParser;
 import org.elasticsearch.indices.analysis.AnalysisModule.AnalysisProvider;
 import org.elasticsearch.plugins.AnalysisPlugin;
 import org.elasticsearch.plugins.Plugin;
@@ -25,7 +26,8 @@ public class StrixPlugin extends Plugin implements AnalysisPlugin, SearchPlugin 
 
     @Override
     public List<QuerySpec<?>> getQueries() {
-        return Collections.singletonList(new QuerySpec<>(SpanQueryAnyTokenBuilder.NAME, SpanQueryAnyTokenBuilder::new, SpanQueryAnyTokenBuilder::fromXContent));
+        QueryParser<SpanQueryAnyTokenBuilder> qp = SpanQueryAnyTokenBuilder::fromXContent;
+        return Collections.singletonList(new QuerySpec<>(SpanQueryAnyTokenBuilder.NAME, SpanQueryAnyTokenBuilder::new, qp));
     }
 
 }
