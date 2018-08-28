@@ -115,8 +115,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
             }
         });
 
-        List<Text> docHighlights = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).collect(Collectors.toList());
-        Text[] something = docHighlights.toArray(new Text[0]);
+        Text[] something = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).toArray(Text[]::new);
         Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(hitContext.docId()), new HighlightField("positions", something));
         hitContext.hit().highlightFields(highlightFields);
     }

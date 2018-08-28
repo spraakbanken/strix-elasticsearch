@@ -91,12 +91,8 @@ public class SpanQueryAnyToken extends SpanQuery {
         }
 
         @Override
-        public int nextStartPosition() throws IOException {
+        public int nextStartPosition() {
             return ++pos;
-        }
-
-        public int skipToPosition(int position) throws IOException {
-            return pos = position;
         }
 
         @Override
@@ -115,7 +111,7 @@ public class SpanQueryAnyToken extends SpanQuery {
         }
 
         @Override
-        public void collect(SpanCollector collector) throws IOException {
+        public void collect(SpanCollector collector) {
 
         }
 
@@ -125,13 +121,13 @@ public class SpanQueryAnyToken extends SpanQuery {
         }
 
         @Override
-        public int nextDoc() throws IOException {
+        public int nextDoc() {
             pos = -1;
             return ++doc;
         }
 
         @Override
-        public int advance(int target) throws IOException {
+        public int advance(int target) {
             pos = -1;
             return doc = target;
         }
