@@ -1,9 +1,6 @@
 package sprakbanken.strix;
 
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
@@ -115,8 +112,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
             }
         });
 
-        List<Text> docHighlights = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).collect(Collectors.toList());
-        Text[] something = docHighlights.toArray(new Text[0]);
+        Text[] something = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).toArray(Text[]::new);
         Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(hitContext.docId()), new HighlightField("positions", something));
         hitContext.hit().highlightFields(highlightFields);
     }
@@ -136,6 +132,8 @@ public class StrixFetchSubPhase implements FetchSubPhase {
             for(BooleanClause clause : booleanQuery.clauses()) {
                 spanQueries.addAll(getSpanQueries(clause.getQuery(), level + 1));
             }
+        } else if (query instanceof BoostQuery){
+            spanQueries.addAll(getSpanQueries(((BoostQuery) query).getQuery(), level));
         }
         return spanQueries;
     }
