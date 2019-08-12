@@ -53,9 +53,9 @@ public class SpanQueryAnyTokenBuilder extends AbstractQueryBuilder<SpanQueryAnyT
             if (token == XContentParser.Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
             } else if (token.isValue()) {
-                if (WIDTH_NAME.match(currentFieldName)) {
+                if (WIDTH_NAME.match(currentFieldName, null)) {
                     width = parser.intValue();
-                } else if (FIELD_NAME.match(currentFieldName)) {
+                } else if (FIELD_NAME.match(currentFieldName, null)) {
                     field = parser.text();
                 } else {
                     throw new ParsingException(parser.getTokenLocation(), "[span_any] query does not support [" + currentFieldName + "]");
