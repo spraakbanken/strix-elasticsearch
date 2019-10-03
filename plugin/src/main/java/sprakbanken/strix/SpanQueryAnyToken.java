@@ -2,8 +2,9 @@ package sprakbanken.strix;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.*;
 
 import java.io.IOException;
@@ -26,15 +27,14 @@ public class SpanQueryAnyToken extends SpanQuery {
     }
 
     @Override
-    public String toString(String field) {
-        return "SpanGap(" + field + ":" + width + ")";
-    }
-
-    @Override
-    public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+    public SpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new SpanQueryAnyToken.SpanGapWeight(searcher, boost);
     }
 
+    @Override
+    public String toString(String field) {
+        return "SpanGap(" + field + ":" + width + ")";
+    }
 
     private class SpanGapWeight extends SpanWeight {
 
@@ -43,7 +43,7 @@ public class SpanQueryAnyToken extends SpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
+        public void extractTermStates(Map<Term, TermStates> contexts) {
 
         }
 
