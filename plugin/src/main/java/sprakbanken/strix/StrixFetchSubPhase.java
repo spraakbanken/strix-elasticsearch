@@ -60,7 +60,7 @@ public class StrixFetchSubPhase implements FetchSubPhase {
 
             try {
                 // TODO is it faster to use new IndexSearcher(hitContext.reader()) instead of context.searcher() for createWeight?
-                SpanWeight weight = spanQuery.createWeight(context.searcher(), false, 0);
+                SpanWeight weight = spanQuery.createWeight(context.searcher(), ScoreMode.COMPLETE_NO_SCORES, 0);
                 Spans spans = weight.getSpans(hitContext.readerContext(), SpanWeight.Postings.POSITIONS);
 
                 if (spans == null) {
