@@ -6,7 +6,7 @@ cd plugin
 mvn install
 cd ..
 
-es_version="6.2.4"
+es_version="7.3.0"
 strix_es_version="1.2"
 
 elasticzipurl="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-$es_version.zip"
