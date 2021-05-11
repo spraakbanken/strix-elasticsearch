@@ -14,6 +14,7 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
+import org.elasticsearch.analysis.common.CommonAnalysisPlugin;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
@@ -29,7 +30,7 @@ public class HighlightTest extends ESIntegTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Collections.singletonList(StrixPlugin.class);
+        return Arrays.asList(CommonAnalysisPlugin.class, StrixPlugin.class);
     }
 
     @Before
