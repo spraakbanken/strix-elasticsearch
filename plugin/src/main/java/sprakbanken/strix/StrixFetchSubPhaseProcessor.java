@@ -1,17 +1,17 @@
 package sprakbanken.strix;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.fetch.FetchContext;
 import org.elasticsearch.search.fetch.FetchSubPhase;
 import org.elasticsearch.search.fetch.FetchSubPhaseProcessor;
+import org.elasticsearch.search.fetch.StoredFieldsSpec;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.fetch.subphase.highlight.SearchHighlightContext;
-import org.elasticsearch.search.internal.SearchContext;
 
 import java.io.IOException;
 import java.util.*;
@@ -126,6 +126,11 @@ public class StrixFetchSubPhaseProcessor implements FetchSubPhaseProcessor {
         Text[] something = sortedHighlights.stream().map(span -> new Text(span.x + "-" + span.y)).toArray(Text[]::new);
         Map<String, HighlightField> highlightFields = Collections.singletonMap(String.valueOf(hitContext.docId()), new HighlightField("positions", something));
         hitContext.hit().highlightFields(highlightFields);
+    }
+
+    @Override
+    public StoredFieldsSpec storedFieldsSpec() {
+        return new StoredFieldsSpec(false, false, Collections.emptySet());
     }
 
     private List<SpanQuery> getSpanQueriesFromContext(FetchContext context) {

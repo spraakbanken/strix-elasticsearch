@@ -3,8 +3,8 @@ package sprakbanken.strix;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.xcontent.XContentBuilder;
+import org.elasticsearch.xcontent.XContentFactory;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.search.SearchHit;
@@ -14,7 +14,6 @@ import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.ESIntegTestCase.ClusterScope;
 import org.elasticsearch.test.ESIntegTestCase.Scope;
-import org.elasticsearch.analysis.common.CommonAnalysisPlugin;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
@@ -30,7 +29,7 @@ public class HighlightTest extends ESIntegTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(CommonAnalysisPlugin.class, StrixPlugin.class);
+        return Arrays.asList(StrixPlugin.class);
     }
 
     @Before
@@ -39,15 +38,15 @@ public class HighlightTest extends ESIntegTestCase {
         XContentBuilder mapping = getMapping();
         client().admin().indices().prepareCreate("test")
                 .setSettings(defaultSettings)
-                .addMapping("test", mapping)
+                .setMapping(mapping)
                 .execute().actionGet();
 
         client().admin().cluster().prepareHealth().setWaitForEvents(Priority.LANGUID).setWaitForGreenStatus().execute().actionGet();
     }
 
     private void smallIndex() {
-        client().prepareIndex("test", "test", "1").setSource("text", "foo").get();
-        client().prepareIndex("test", "test", "2").setSource("text", "foo").get();
+        client().prepareIndex("test").setSource("text", "foo").get();
+        client().prepareIndex("test").setSource("text", "foo").get();
         refresh();
     }
 
@@ -58,7 +57,7 @@ public class HighlightTest extends ESIntegTestCase {
         }
         String bar = String.join(" ", bars);
         for(int i = 0; i < numberOfDocs; i++) {
-            client().prepareIndex("test", "test", Integer.toString(i)).setSource("text", "foo " + bar + " foo bar").get();
+            client().prepareIndex("test").setSource("text", "foo " + bar + " foo bar").get();
         }
         refresh();
     }
@@ -70,9 +69,9 @@ public class HighlightTest extends ESIntegTestCase {
         for(SearchHit searchHit : hits) {
             Map<String, HighlightField> highlightFields = searchHit.getHighlightFields();
             HighlightField field = highlightFields.get("positions");
-            String name = field.getName();
+            String name = field.name();
             assertEquals("positions", name);
-            Text[] fragments = field.getFragments();
+            Text[] fragments = field.fragments();
             String string = fragments[0].string();
             assertEquals("0-1", string);
         }
@@ -88,7 +87,7 @@ public class HighlightTest extends ESIntegTestCase {
         for(SearchHit searchHit : hits) {
             Map<String, HighlightField> highlightFields =  searchHit.getHighlightFields();
             HighlightField positions = highlightFields.get("positions");
-            Text[] fragments = positions.getFragments();
+            Text[] fragments = positions.fragments();
             assertEquals(2, fragments.length);
 
             String first = fragments[0].string();
@@ -109,7 +108,7 @@ public class HighlightTest extends ESIntegTestCase {
         Map<String, HighlightField> highlightFields = hits[0].getHighlightFields();
         HighlightField positions = highlightFields.get("positions");
         assertNotNull(positions);
-        Text[] fragments = positions.getFragments();
+        Text[] fragments = positions.fragments();
         assertEquals(2, fragments.length);
         assertEquals("0-2", fragments[0].string());
         assertEquals("501-503", fragments[1].string());
@@ -124,8 +123,8 @@ public class HighlightTest extends ESIntegTestCase {
     }
 
     public void testSpanQueryAnyToken() {
-        client().prepareIndex("test", "test", "1").setSource("text", "foo bar lol").get();
-        client().prepareIndex("test", "test", "2").setSource("text", "foo lol bar").get();
+        client().prepareIndex("test").setSource("text", "foo bar lol").get();
+        client().prepareIndex("test").setSource("text", "foo lol bar").get();
         refresh();
 
         SpanQueryBuilder foo = QueryBuilders.spanTermQuery("text", "foo");
@@ -139,7 +138,7 @@ public class HighlightTest extends ESIntegTestCase {
         Map<String, HighlightField> highlightFields = hits[0].getHighlightFields();
         HighlightField positions = highlightFields.get("positions");
         assertNotNull(positions);
-        Text[] fragments = positions.getFragments();
+        Text[] fragments = positions.fragments();
         assertEquals(1, fragments.length);
         assertEquals("0-2", fragments[0].string());
     }
@@ -151,7 +150,7 @@ public class HighlightTest extends ESIntegTestCase {
     }
 
     private SearchHit[] getSearchHits(QueryBuilder queryBuilder) {
-        SearchResponse searchResponse = client().prepareSearch("test").setTypes("test")
+        SearchResponse searchResponse = client().prepareSearch("test")
                 .setQuery(queryBuilder)
                 .setSize(9999)
                 .highlighter(new HighlightBuilder().field("strix"))

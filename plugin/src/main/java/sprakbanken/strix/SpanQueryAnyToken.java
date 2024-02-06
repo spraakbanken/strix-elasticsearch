@@ -3,13 +3,16 @@ package sprakbanken.strix;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.*;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 public class SpanQueryAnyToken extends SpanQuery {
 
@@ -29,6 +32,11 @@ public class SpanQueryAnyToken extends SpanQuery {
     @Override
     public SpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new SpanQueryAnyToken.SpanGapWeight(searcher, boost);
+    }
+
+    @Override
+    public void visit(QueryVisitor queryVisitor) {
+        queryVisitor.visitLeaf(this);
     }
 
     @Override
@@ -52,10 +60,7 @@ public class SpanQueryAnyToken extends SpanQuery {
             return new GapSpans(width);
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
 
-        }
 
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {

@@ -8,13 +8,13 @@
     <files>
         <file>
             <source>${project.basedir}/src/main/resources/plugin-descriptor.properties</source>
-            <outputDirectory>strix-elasticsearch-plugin</outputDirectory>
+	    <outputDirectory>strix-plugin-${elasticsearch.version}</outputDirectory>
             <filtered>true</filtered>
         </file>
     </files>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>strix-elasticsearch-plugin</outputDirectory>
+	    <outputDirectory>strix-plugin-${elasticsearch.version}</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
         </dependencySet>

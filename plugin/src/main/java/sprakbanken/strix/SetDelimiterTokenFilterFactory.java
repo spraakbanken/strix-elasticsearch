@@ -11,7 +11,7 @@ public class SetDelimiterTokenFilterFactory extends AbstractTokenFilterFactory {
     private String delimiter;
 
     public SetDelimiterTokenFilterFactory(IndexSettings indexSettings, Environment environment, String name, Settings settings) {
-        super(indexSettings, name, settings);
+        super(name, settings);
         this.delimiter = settings.get("delimiter", "\u241F");
     }
 
