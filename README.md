@@ -11,7 +11,7 @@ Contents of this repo:
     cd plugin
     mvn install
     ```
-4. Move `plugin/target/releases/*.zip` (one file) to <elasticsearch_dir>/plugins/
+4. Unpack `plugin/target/releases/*.zip` and move containing folder to <elasticsearch_dir>/plugins/
 5. Recommmended settings to att to `elasticsearch.yml` is:
     ```
     http.max_content_length: 1000mb
